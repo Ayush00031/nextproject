@@ -8,6 +8,7 @@ import { getAllUsersForNewsEmail } from "../actions/user.actions";
 import { getWatchlistSymbolsByEmail } from "../actions/watchlist.actions";
 import { getNews } from "../actions/finnhub.actions";
 import { getFormattedTodayDate } from "../utils";
+import { email } from "better-auth";
 
 export const sendSignUpEmail = inngest.createFunction(
   { id: "sign-up-email" },
@@ -126,19 +127,25 @@ export const sendDailyNewsSummary = inngest.createFunction(
 
     // Step #4: (placeholder) Send the emails
     await step.run("send-news-emails", async () => {
-      await Promise.all(
+      const results = await Promise.allSettled(
         userNewsSummaries.map(async ({ user, newsContent }) => {
-          if (!newsContent) return false;
-
-          return await sendNewsSummaryEmail({
-            email: user.email,
-            date: getFormattedTodayDate(),
-            newsContent,
-          });
+          if (!newsContent) return;
+          try {
+            await sendNewsSummaryEmail({
+              email: user.email,
+              date: getFormattedTodayDate(),
+              newsContent,
+            });
+          } catch (err) {
+            console.error("Failed to send news summary for user: ", {
+              email: user.email,
+              error: err,
+            });
+          }
         })
       );
+      return results.length;
     });
-
     return {
       success: true,
       message: "Daily news summary emails sent successfully",
