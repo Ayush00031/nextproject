@@ -2,7 +2,7 @@
 
 import { useDebounce } from "@/hooks/useDebounce";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { CommandDialog, CommandEmpty, CommandInput, CommandList } from "cmdk";
 import { Link, Loader2, TrendingUp } from "lucide-react";
@@ -32,7 +32,7 @@ export default function SearchCommand({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (!isSearchMode) return setStocks(initialStocks);
 
     setLoading(true);
@@ -44,7 +44,7 @@ export default function SearchCommand({
     } finally {
       setLoading(false);
     }
-  };
+  }, [isSearchMode, searchTerm, initialStocks]);
   const debouncedSearch = useDebounce(handleSearch, 300);
 
   useEffect(() => {
